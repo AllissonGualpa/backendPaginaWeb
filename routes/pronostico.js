@@ -16,15 +16,14 @@ router.get('/obtenerPronostico', async function (req, res, next) {
             });
         }
 
-        // Buscar pronósticos para la ciudad (insensible a mayúsculas/minúsculas)
-        const pronosticos = await pronostico.findAll({
-            where: Sequelize.where(
-                Sequelize.fn('LOWER', Sequelize.col('cityName')),
-                'LIKE',
-                `%${ciudad.toLowerCase()}%`
-            ),
-            order: [['dt', 'ASC']] // Ordenar por fecha ascendente
-        });
+        // Usar consulta SQL directa en lugar de Sequelize ORM
+        const pronosticos = await pronostico.sequelize.query(
+            `SELECT * FROM pronosticos WHERE cityName LIKE :busqueda ORDER BY dt ASC`,
+            {
+                replacements: { busqueda: `%${ciudad}%` },
+                type: Sequelize.QueryTypes.SELECT
+            }
+        );
 
         // Si no se encuentran resultados
         if (pronosticos.length === 0) {
@@ -42,7 +41,7 @@ router.get('/obtenerPronostico', async function (req, res, next) {
             pais: pronosticos[0].cityCountry,
             pronosticos: pronosticos.map(p => ({
                 fecha: p.forecastDate,
-                hora: p.dtTxt?.split(' ')[1] || '',
+                hora: p.dtTxt ? p.dtTxt.split(' ')[1] : '',
                 temperatura: p.forecastTemp || p.currentTemp,
                 descripcion: p.forecastDesc || p.weatherDescription,
                 icono: p.weatherIcon,
@@ -52,6 +51,9 @@ router.get('/obtenerPronostico', async function (req, res, next) {
         });
     } catch (error) {
         console.error('Error al obtener pronósticos:', error);
+        // Incluir más detalles del error en desarrollo
+        console.error('Error completo:', error);
+        
         res.status(500).json({
             success: false,
             message: 'Error al obtener pronósticos',
