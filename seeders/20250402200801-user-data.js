@@ -13,7 +13,7 @@ module.exports = {
       anthony123: await bcrypt.hash('anthony123', 10),
     };
 
-    await queryInterface.bulkInsert('users', [
+    await queryInterface.bulkInsert('user', [
       {
         name: 'Allisson Gualpa',
         email: 'allisson.gualpa@example.com',
@@ -41,6 +41,6 @@ module.exports = {
   async down(queryInterface, Sequelize) {
     await queryInterface.bulkDelete('userFav', null, {});
     await queryInterface.bulkDelete('userClima', null, {});
-    await queryInterface.bulkDelete('users', null, {});
+    await queryInterface.bulkDelete('user', null, {});
   }
 };
